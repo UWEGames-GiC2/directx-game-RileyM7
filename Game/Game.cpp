@@ -150,8 +150,9 @@ void Game::Initialize(HWND _window, int _width, int _height)
     m_GameObjects.push_back(m_cam);
 
     //add Player
-    Player* pPlayer = new Player("BirdModelV1", m_d3dDevice.Get(), m_fxFactory);
+    Player* pPlayer = new Player("bc417e1d5436463cb3d05631c0bcff84", m_d3dDevice.Get(), m_fxFactory);
     m_GameObjects.push_back(pPlayer);
+    pPlayer->SetScale(0.2f);
 
     //add a secondary camera
     m_TPScam = new TPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, pPlayer, Vector3::UnitY, Vector3(0.0f, 10.0f, 50.0f));

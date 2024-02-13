@@ -150,6 +150,7 @@
   </ItemGroup>
   <ItemGroup>
     <MeshContentTask Include="Bird\BirdModelV1.fbx" />
+    <MeshContentTask Include="Car\bc417e1d5436463cb3d05631c0bcff84.fbx" />
     <MeshContentTask Include="Table\table.FBX">
       <FileType>Document</FileType>
     </MeshContentTask>
