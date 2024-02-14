@@ -24,6 +24,7 @@ class Camera;
 class TPSCamera;
 class Light;
 class Sound;
+class Player;
 
 // A basic game implementation that creates a D3D11 device and
 // provides a game loop.
@@ -55,6 +56,7 @@ public:
 
     // Properties
     void GetDefaultSize( int& _width, int& _height ) const noexcept;
+    Player* pPlayer = NULL;
 
 private:
 

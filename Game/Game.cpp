@@ -144,18 +144,21 @@ void Game::Initialize(HWND _window, int _width, int _height)
     VBMC->SetScale(Vector3(3, 3, 1.5));
     m_GameObjects.push_back(VBMC);
 
+ //add Player
+    pPlayer = new Player("UpdatedChief", m_d3dDevice.Get(), m_fxFactory);
+    m_GameObjects.push_back(pPlayer);
+    pPlayer->SetScale(0.1f);
+
     //create a base camera
-    m_cam = new Camera(0.25f * XM_PI, AR, 1.0f, 10000.0f, Vector3::UnitY, Vector3::Zero);
-    m_cam->SetPos(Vector3(0.0f, 200.0f, 200.0f));
+    m_cam = new Camera(0.25f * XM_PI, AR, 1.0f, 10000.0f, Vector3::UnitY, Vector3(pPlayer->GetPos().x + 10, pPlayer->GetPos().y,pPlayer->GetPos().z - pPlayer->GetScale().z));
+    //m_cam->SetPos(Vector3(0.0f, 200.0f, 200.0f));
+    
     m_GameObjects.push_back(m_cam);
 
-    //add Player
-    Player* pPlayer = new Player("bc417e1d5436463cb3d05631c0bcff84", m_d3dDevice.Get(), m_fxFactory);
-    m_GameObjects.push_back(pPlayer);
-    pPlayer->SetScale(0.2f);
+   
 
     //add a secondary camera
-    m_TPScam = new TPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, pPlayer, Vector3::UnitY, Vector3(0.0f, 10.0f, 50.0f));
+    m_TPScam = new TPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, pPlayer, Vector3::UnitY, Vector3(0.0f, 100.0f, 10.0f));
     m_GameObjects.push_back(m_TPScam);
 
     //test all GPGOs
@@ -253,6 +256,7 @@ void Game::Tick()
 // Updates the world.
 void Game::Update(DX::StepTimer const& _timer)
 {
+    m_cam->SetPos(Vector3(pPlayer->GetPos().x, pPlayer->GetPos().y, pPlayer->GetPos().z - pPlayer->GetScale().z));
     float elapsedTime = float(_timer.GetElapsedSeconds());
     m_GD->m_dt = elapsedTime;
 
