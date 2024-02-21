@@ -8,7 +8,7 @@ Player::Player(string _fileName, ID3D11Device* _pd3dDevice, IEffectFactory* _EF)
 	//any special set up for Player goes here
 	m_fudge = Matrix::CreateRotationY(XM_PI);
 
-	m_pos.y = 10.0f;
+	m_pos.y = 1.0f;
 
 	SetDrag(0.7);
 	SetPhysicsOn(true);
@@ -24,15 +24,30 @@ void Player::Tick(GameData* _GD)
 {
 	switch (_GD->m_GS)
 	{
-	case GS_PLAY_MAIN_CAM:
+	case GS_PLAY_FPS_CAM:
 	{
+	
+		//TURN AND FORWARD CONTROL HERE
+		Vector3 forwardMove = 40.0f * Vector3::Forward;
+		Matrix rotMove = Matrix::CreateRotationY(m_yaw);
+		forwardMove = Vector3::Transform(forwardMove, rotMove);
+		if (_GD->m_KBS.W)
 		{
-			//MOUSE CONTROL SCHEME HERE
-			float speed = 10.0f;
-			m_acc.x += speed * _GD->m_MS.x;
-			m_acc.z += speed * _GD->m_MS.y;
-			break;
+			m_acc += forwardMove;
 		}
+		if (_GD->m_KBS.S)
+		{
+			m_acc -= forwardMove;
+		}
+		break;
+
+		//{
+		//	//MOUSE CONTROL SCHEME HERE
+		//	float speed = 10.0f;
+		//	m_acc.x += speed * _GD->m_MS.x;
+		//	m_acc.z += speed * _GD->m_MS.y;
+		//	break;
+		//}
 	}
 	case GS_PLAY_TPS_CAM:
 	{
@@ -54,13 +69,20 @@ void Player::Tick(GameData* _GD)
 
 	//change orinetation of player
 	float rotSpeed = 2.0f * _GD->m_dt;
+	Vector3 sideMove = 40.0f * Vector3::Right;
+	Matrix rotMove = Matrix::CreateRotationY(m_yaw);
+	sideMove = Vector3::Transform(sideMove, rotMove);
+	m_yaw -= _GD->m_dt * _GD->m_MS.x;
+	m_pitch -= _GD->m_dt * _GD->m_MS.y;
+	if (m_pitch > XMConvertToRadians(60)) m_pitch = XMConvertToRadians(60);
+	if (m_pitch < XMConvertToRadians(-60)) m_pitch = XMConvertToRadians(-60);
 	if (_GD->m_KBS.A)
 	{
-		m_yaw += rotSpeed;
+		m_acc -= sideMove;
 	}
 	if (_GD->m_KBS.D)
 	{
-		m_yaw -= rotSpeed;
+		m_acc += sideMove;
 	}
 
 	//move player up and down

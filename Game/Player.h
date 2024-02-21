@@ -15,6 +15,8 @@ public:
 
 	virtual void Tick(GameData* _GD) override;
 
+	//Matrix rotMove = Matrix::CreateRotationY(m_yaw);
+
 protected:
 
 };
