@@ -4,5 +4,16 @@
     <ImageContentTask Include="logo_small.png" />
     <ImageContentTask Include="grass.jpg" />
     <ImageContentTask Include="white.jpg" />
+    <ImageContentTask Include="..\Models\Car\ombre.jpg" />
+    <ImageContentTask Include="..\Models\Car\ombre.png" />
+    <ImageContentTask Include="..\Models\Car\pahre1.png" />
+    <ImageContentTask Include="..\Models\Car\pahre2.png" />
+    <ImageContentTask Include="..\Models\Car\plaque.jpeg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Models\Car\BAKE.jpeg" />
+    <Image Include="..\Models\Car\logo.png" />
+    <Image Include="..\Models\Car\metal_lead_rough_basecolor.png" />
+    <Image Include="..\Models\Car\metal_lead_rough_metallic.png" />
   </ItemGroup>
 </Project>

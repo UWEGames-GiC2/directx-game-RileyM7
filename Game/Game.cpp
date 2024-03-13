@@ -65,7 +65,7 @@ void Game::Initialize(HWND _window, int _width, int _height)
 
     //create GameData struct and populate its pointers
     m_GD = new GameData;
-    m_GD->m_GS = GS_PLAY_MAIN_CAM;
+    m_GD->m_GS = GS_PLAY_FPS_CAM;
 
     //set up systems for 2D rendering
     m_DD2D = new DrawData2D();
@@ -157,18 +157,20 @@ void Game::Initialize(HWND _window, int _width, int _height)
     VBMC->SetScale(Vector3(3, 3, 1.5));
     m_GameObjects.push_back(VBMC);
 
-    //create a base camera
-    m_cam = new Camera(0.25f * XM_PI, AR, 1.0f, 10000.0f, Vector3::UnitY, Vector3::Zero);
-    m_cam->SetPos(Vector3(0.0f, 200.0f, 200.0f));
-    m_GameObjects.push_back(m_cam);
-
-    //add Player
-    Player* pPlayer = new Player("BirdModelV1", m_d3dDevice.Get(), m_fxFactory);
+ //add Player
+    pPlayer = new Player("UpdatedChief", m_d3dDevice.Get(), m_fxFactory);
     m_GameObjects.push_back(pPlayer);
+    pPlayer->SetPos(Vector3(-50, -50, -50));
+    pPlayer->SetScale(0.1f);
+
+    //create a base camera
+
+    m_FPScam = new FPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, pPlayer , Vector3::UnitY, Vector3(0.0f, 0.0f, 0.1f));
+    m_GameObjects.push_back(m_FPScam);
     m_PhysicsObjects.push_back(pPlayer);
 
     //add a secondary camera
-    m_TPScam = new TPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, pPlayer, Vector3::UnitY, Vector3(0.0f, 10.0f, 50.0f));
+    m_TPScam = new TPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, pPlayer, Vector3::UnitY, Vector3(0.0f, 0.0f, 50.0f));
     m_GameObjects.push_back(m_TPScam);
 
     //test all GPGOs
@@ -226,7 +228,7 @@ void Game::Initialize(HWND _window, int _width, int _height)
     m_DD = new DrawData;
     m_DD->m_pd3dImmediateContext = nullptr;
     m_DD->m_states = m_states;
-    m_DD->m_cam = m_cam;
+    m_DD->m_cam = m_FPScam;
     m_DD->m_light = m_light;
 
     //example basic 2D stuff
@@ -266,6 +268,7 @@ void Game::Tick()
 // Updates the world.
 void Game::Update(DX::StepTimer const& _timer)
 {
+   
     float elapsedTime = float(_timer.GetElapsedSeconds());
     m_GD->m_dt = elapsedTime;
 
@@ -291,13 +294,13 @@ void Game::Update(DX::StepTimer const& _timer)
     //see docs here for what's going on: https://github.com/Microsoft/DirectXTK/wiki/Keyboard
     if (m_GD->m_KBS_tracker.pressed.Space)
     {
-        if (m_GD->m_GS == GS_PLAY_MAIN_CAM)
+        if (m_GD->m_GS == GS_PLAY_TPS_CAM)
         {
             m_GD->m_GS = GS_PLAY_TPS_CAM;
         }
         else
         {
-            m_GD->m_GS = GS_PLAY_MAIN_CAM;
+            m_GD->m_GS = GS_PLAY_FPS_CAM;
         }
     }
 
@@ -329,7 +332,7 @@ void Game::Render()
     m_DD->m_pd3dImmediateContext = m_d3dContext.Get();
 
     //set which camera to be used
-    m_DD->m_cam = m_cam;
+    m_DD->m_cam = m_FPScam;
     if (m_GD->m_GS == GS_PLAY_TPS_CAM)
     {
         m_DD->m_cam = m_TPScam;

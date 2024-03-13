@@ -150,6 +150,17 @@
     <ImageContentTask Include="grass.jpg" />
     <ImageContentTask Include="white.jpg" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Models\Car\BAKE.jpeg" />
+    <Image Include="..\Models\Car\logo.png" />
+    <Image Include="..\Models\Car\metal_lead_rough_basecolor.png" />
+    <Image Include="..\Models\Car\metal_lead_rough_metallic.png" />
+    <ImageContentTask Include="..\Models\Car\ombre.jpg" />
+    <ImageContentTask Include="..\Models\Car\ombre.png" />
+    <ImageContentTask Include="..\Models\Car\pahre1.png" />
+    <ImageContentTask Include="..\Models\Car\pahre2.png" />
+    <ImageContentTask Include="..\Models\Car\plaque.jpeg" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\ImageContentTask.targets" />
