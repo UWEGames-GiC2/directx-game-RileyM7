@@ -17,7 +17,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <MeshContentTask Include="Vase\JEMINA vase -up.fbx" />
+    <MeshContentTask Include="Vase\JEMINA.fbx" />
     <MeshContentTask Include="Table\table.FBX" />
     <MeshContentTask Include="Bird\BirdModelV1.fbx" />
     <MeshContentTask Include="Car\bc417e1d5436463cb3d05631c0bcff84.fbx" />

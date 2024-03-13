@@ -2,6 +2,7 @@
 #include "Player.h"
 #include <dinput.h>
 #include "GameData.h"
+#include <iostream>
 
 Player::Player(string _fileName, ID3D11Device* _pd3dDevice, IEffectFactory* _EF) : CMOGO(_fileName, _pd3dDevice, _EF)
 {
@@ -26,7 +27,12 @@ void Player::Tick(GameData* _GD)
 	{
 	case GS_PLAY_FPS_CAM:
 	{
-	
+		pHeight = 15;
+		if (m_pos.y - pHeight <= 0)
+		{	
+			m_pos.y = pHeight;
+		}
+		
 		//TURN AND FORWARD CONTROL HERE
 		Vector3 forwardMove = 40.0f * Vector3::Forward;
 		Matrix rotMove = Matrix::CreateRotationY(m_yaw);

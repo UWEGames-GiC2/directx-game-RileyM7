@@ -62,7 +62,7 @@ protected:
 	Matrix m_rotMat;
 	Matrix m_fudge;
 	Vector3 m_pos;
-	float m_pitch, m_yaw, m_roll;
+	float m_pitch, m_yaw, m_roll, pHeight;
 	Vector3 m_scale;
 
 	//very basic physics
