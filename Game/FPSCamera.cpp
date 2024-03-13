@@ -17,8 +17,8 @@ FPSCamera::~FPSCamera()
 void FPSCamera::Tick(GameData* _GD)
 {
 	//Set up position of camera and target position of camera based on new position and orientation of target object
-	Matrix rotCam = Matrix::CreateFromYawPitchRoll(m_targetObject->GetYaw(), m_targetObject->GetPitch(), 0.0f);
-	m_target = m_targetObject->GetPos();
+	Matrix rotCam = Matrix::CreateFromYawPitchRoll(m_targetObject->GetYaw() , m_targetObject->GetPitch(), 0.0f);
+	m_target = m_targetObject->GetPos() + Vector3( 0, m_targetObject->GetScale().y, 0);
 	m_pos = m_target + Vector3::Transform(m_dpos, rotCam);
 
 	//and then set up proj and view matrices

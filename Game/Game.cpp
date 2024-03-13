@@ -147,11 +147,12 @@ void Game::Initialize(HWND _window, int _width, int _height)
  //add Player
     pPlayer = new Player("UpdatedChief", m_d3dDevice.Get(), m_fxFactory);
     m_GameObjects.push_back(pPlayer);
+    pPlayer->SetPos(Vector3(-50, -50, -50));
     pPlayer->SetScale(0.1f);
 
     //create a base camera
 
-    m_FPScam = new FPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, pPlayer, Vector3::UnitY , Vector3(0.0f, 0.0f, 0.1f));
+    m_FPScam = new FPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, pPlayer , Vector3::UnitY, Vector3(0.0f, 0.0f, 0.1f));
     m_GameObjects.push_back(m_FPScam);
 
     //add a secondary camera
@@ -279,7 +280,7 @@ void Game::Update(DX::StepTimer const& _timer)
     //see docs here for what's going on: https://github.com/Microsoft/DirectXTK/wiki/Keyboard
     if (m_GD->m_KBS_tracker.pressed.Space)
     {
-        if (m_GD->m_GS == GS_PLAY_FPS_CAM)
+        if (m_GD->m_GS == GS_PLAY_TPS_CAM)
         {
             m_GD->m_GS = GS_PLAY_TPS_CAM;
         }
