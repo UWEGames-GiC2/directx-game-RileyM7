@@ -113,18 +113,18 @@ void Game::Initialize(HWND _window, int _width, int _height)
     m_GameObjects.push_back(terrainTable);
     m_TriggerObjects.push_back(terrainTable);
 
-    std::shared_ptr<Terrain> terrainFloor = std::make_shared<Terrain>("Floor", m_d3dDevice.Get(), m_fxFactory, Vector3(0.0f, 0.0f, 0.0f), 0.0f, 0.0f, 0.0f, Vector3(0.5F, 0.5F, 0.5F));
-    m_GameObjects.push_back(terrainFloor);
-    m_ColliderObjects.push_back(terrainFloor);
+    //std::shared_ptr<Terrain> terrainFloor = std::make_shared<Terrain>("Floor", m_d3dDevice.Get(), m_fxFactory, Vector3(0.0f, 0.0f, 0.0f), 0.0f, 0.0f, 0.0f, Vector3(0.5F, 0.5F, 0.5F));
+    //m_GameObjects.push_back(terrainFloor);
+    //m_ColliderObjects.push_back(terrainFloor);
 
-    std::shared_ptr<Terrain> terrainWall = std::make_shared<Terrain>("Wall", m_d3dDevice.Get(), m_fxFactory, Vector3(0.0f, 0.0f, 50.0f), 0.0f, 0.0f, 0.0f, Vector3(0.5F, 0.2F, 0.4F));
-    m_GameObjects.push_back(terrainWall);
-    m_ColliderObjects.push_back(terrainWall);
-    
+    //std::shared_ptr<Terrain> terrainWall = std::make_shared<Terrain>("Wall", m_d3dDevice.Get(), m_fxFactory, Vector3(0.0f, 0.0f, 50.0f), 0.0f, 0.0f, 0.0f, Vector3(0.5F, 0.2F, 0.4F));
+    //m_GameObjects.push_back(terrainWall);
+    //m_ColliderObjects.push_back(terrainWall);
+    //
 
-    std::shared_ptr<Terrain> terrainWall2 = std::make_shared<Terrain>("Wall", m_d3dDevice.Get(), m_fxFactory, Vector3(0.0f, 0.0f, -50.0f), 0.0f, 0.0f, 0.0f, Vector3(0.5F, 0.2F, 0.4F));
-    m_GameObjects.push_back(terrainWall2);
-    m_ColliderObjects.push_back(terrainWall2);
+    //std::shared_ptr<Terrain> terrainWall2 = std::make_shared<Terrain>("Wall", m_d3dDevice.Get(), m_fxFactory, Vector3(0.0f, 0.0f, -50.0f), 0.0f, 0.0f, 0.0f, Vector3(0.5F, 0.2F, 0.4F));
+    //m_GameObjects.push_back(terrainWall2);
+    //m_ColliderObjects.push_back(terrainWall2);
 
         std::shared_ptr<Terrain> terrainTarget1 = std::make_shared<Terrain>("CUBECMOGO", m_d3dDevice.Get(), m_fxFactory, Vector3(-100.0f, 0.0f, 0.0f), 0.0f, 0.0f, 0.0f, Vector3(0.1F, 0.15F, 0.1F));
     m_GameObjects.push_back(terrainTarget1);
