@@ -12,6 +12,7 @@
 #include "Tree.h"
 #include "Terrain.h"
 #include "Player.h"
+#include "Projectile.h"
 #include "Light.h"
 #include "GPGO.h"
 

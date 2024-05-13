@@ -17,10 +17,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <MeshContentTask Include="Vase\JEMINA vase -up.fbx" />
+    <MeshContentTask Include="Vase\JEMINA.fbx" />
     <MeshContentTask Include="Table\table.FBX" />
     <MeshContentTask Include="Bird\BirdModelV1.fbx" />
     <MeshContentTask Include="Car\bc417e1d5436463cb3d05631c0bcff84.fbx" />
     <MeshContentTask Include="..\..\UnFortnitedCheif\UnFortnitedCheif\UpdatedChief.fbx" />
+    <MeshContentTask Include="..\..\CUBECMOGO.fbx" />
+    <MeshContentTask Include="..\..\Floor.fbx" />
+    <MeshContentTask Include="..\..\Wall.fbx" />
+    <MeshContentTask Include="..\..\..\..\Downloads\door--prison-door-metal-old-12mb\source\prison door.fbx" />
+    <MeshContentTask Include="..\..\..\More Games In C++ 2\room.fbx" />
   </ItemGroup>
 </Project>

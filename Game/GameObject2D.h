@@ -21,6 +21,7 @@ class GameObject2D
 public:
 	GameObject2D();
 	virtual ~GameObject2D() {};
+	bool IsActive() { return m_IsActive; }
 
 	virtual void Tick(GameData* _GD) = 0;
 	virtual void Draw(DrawData2D* _DD) = 0;
@@ -33,6 +34,7 @@ public:
 	void SetScale(Vector2 _scale) { m_scale = _scale; }
 	void SetScale(float _scale) { m_scale = _scale * Vector2::One; }
 	void SetOrigin(Vector2 _origin) { m_origin = _origin; }
+	void SetActive(bool _active) { m_IsActive = _active;  }
 
 protected:
 	Vector2 m_pos;
@@ -40,6 +42,7 @@ protected:
 	Vector2 m_scale;
 	Color m_colour;
 	Vector2 m_origin;
+	bool m_IsActive = true;
 
 };
 

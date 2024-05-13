@@ -17,7 +17,10 @@ public:
 
 	//Matrix rotMove = Matrix::CreateRotationY(m_yaw);
 
+	std::vector<std::shared_ptr<CMOGO>> projectiles;
+
 protected:
+
 
 };
 

@@ -9,6 +9,7 @@
 #include <iostream>
 
 //Scarle Headers
+#include <dinput.h>
 #include "GameData.h"
 #include "GameState.h"
 #include "DrawData.h"
@@ -18,6 +19,7 @@
 #include "CMOGO.h"
 #include <DirectXCollision.h>
 #include "Collision.h"
+#include "Projectile.h"
 
 extern void ExitGame() noexcept;
 
@@ -64,13 +66,23 @@ void Game::Initialize(HWND _window, int _width, int _height)
     ShowCursor(false);
 
     //create GameData struct and populate its pointers
-    m_GD = new GameData;
-    m_GD->m_GS = GS_PLAY_FPS_CAM;
+    m_GameData = new GameData;
+    m_GameData->m_GS = GS_PLAY_FPS_CAM;
 
     //set up systems for 2D rendering
-    m_DD2D = new DrawData2D();
-    m_DD2D->m_Sprites.reset(new SpriteBatch(m_d3dContext.Get()));
-    m_DD2D->m_Font.reset(new SpriteFont(m_d3dDevice.Get(), L"..\\Assets\\italic.spritefont"));
+    m_DrawData2DMenu = new DrawData2D();
+    m_DrawData2DMenu->m_Sprites.reset(new SpriteBatch(m_d3dContext.Get()));
+    m_DrawData2DMenu->m_Font.reset(new SpriteFont(m_d3dDevice.Get(), L"..\\Assets\\italic.spritefont"));
+    m_states = new CommonStates(m_d3dDevice.Get());
+
+    m_DrawData2DWin = new DrawData2D();
+    m_DrawData2DWin->m_Sprites.reset(new SpriteBatch(m_d3dContext.Get()));
+    m_DrawData2DWin->m_Font.reset(new SpriteFont(m_d3dDevice.Get(), L"..\\Assets\\italic.spritefont"));
+    m_states = new CommonStates(m_d3dDevice.Get());
+
+    m_DrawData2DLose = new DrawData2D();
+    m_DrawData2DLose->m_Sprites.reset(new SpriteBatch(m_d3dContext.Get()));
+    m_DrawData2DLose->m_Font.reset(new SpriteFont(m_d3dDevice.Get(), L"..\\Assets\\italic.spritefont"));
     m_states = new CommonStates(m_d3dDevice.Get());
 
     //set up DirectXTK Effects system
@@ -90,165 +102,179 @@ void Game::Initialize(HWND _window, int _width, int _height)
     //create a set of dummy things to show off the engine
 
     //create a base light
-    m_light = new Light(Vector3(0.0f, 100.0f, 160.0f), Color(1.0f, 1.0f, 1.0f, 1.0f), Color(0.4f, 0.1f, 0.1f, 1.0f));
+    std::shared_ptr<Light> m_light = std::make_shared<Light>(Vector3(0.0f, 100.0f, 160.0f), Color(0.5f, 0.2f, 0.3f, 0.2f), Color(0.4f, 0.1f, 0.1f, 1.0f));
     m_GameObjects.push_back(m_light);
 
     //find how big my window is to correctly calculate my aspect ratio
     float AR = (float)_width / (float)_height;
 
     //example basic 3D stuff
-    Terrain* terrain = new Terrain("table", m_d3dDevice.Get(), m_fxFactory, Vector3(100.0f, 0.0f, 100.0f), 0.0f, 0.0f, 0.0f, 0.25f * Vector3::One);
-    m_GameObjects.push_back(terrain);
-    m_ColliderObjects.push_back(terrain);
+    std::shared_ptr<Terrain> terrainTable = std::make_shared<Terrain>("table", m_d3dDevice.Get(), m_fxFactory, Vector3(100.0f, 0.0f, 100.0f), 0.0f, 0.0f, 0.0f, 0.25f * Vector3::One);
+    m_GameObjects.push_back(terrainTable);
+    m_TriggerObjects.push_back(terrainTable);
 
-    Terrain* terrain2 = new Terrain("table", m_d3dDevice.Get(), m_fxFactory, Vector3(-100.0f, 0.0f, -100.0f), 0.0f, 0.0f, 0.0f, Vector3::One);
-    m_GameObjects.push_back(terrain2);
-    m_ColliderObjects.push_back(terrain2);
+    std::shared_ptr<Terrain> terrainFloor = std::make_shared<Terrain>("Floor", m_d3dDevice.Get(), m_fxFactory, Vector3(0.0f, 0.0f, 0.0f), 0.0f, 0.0f, 0.0f, Vector3(0.5F, 0.5F, 0.5F));
+    m_GameObjects.push_back(terrainFloor);
+    m_ColliderObjects.push_back(terrainFloor);
+
+    std::shared_ptr<Terrain> terrainWall = std::make_shared<Terrain>("Wall", m_d3dDevice.Get(), m_fxFactory, Vector3(0.0f, 0.0f, 50.0f), 0.0f, 0.0f, 0.0f, Vector3(0.5F, 0.2F, 0.4F));
+    m_GameObjects.push_back(terrainWall);
+    m_ColliderObjects.push_back(terrainWall);
+    
+
+    std::shared_ptr<Terrain> terrainWall2 = std::make_shared<Terrain>("Wall", m_d3dDevice.Get(), m_fxFactory, Vector3(0.0f, 0.0f, -50.0f), 0.0f, 0.0f, 0.0f, Vector3(0.5F, 0.2F, 0.4F));
+    m_GameObjects.push_back(terrainWall2);
+    m_ColliderObjects.push_back(terrainWall2);
+
+        std::shared_ptr<Terrain> terrainTarget1 = std::make_shared<Terrain>("CUBECMOGO", m_d3dDevice.Get(), m_fxFactory, Vector3(-100.0f, 0.0f, 0.0f), 0.0f, 0.0f, 0.0f, Vector3(0.1F, 0.15F, 0.1F));
+    m_GameObjects.push_back(terrainTarget1);
+    m_TriggerObjects.push_back(terrainTarget1);
+    terrainTarget1->id = 1;
+
+    std::shared_ptr<Terrain> terrainDoor1 = std::make_shared<Terrain>("prison door", m_d3dDevice.Get(), m_fxFactory, Vector3(50.0f, 0.0f, -25.0f), 0.0f, 0.0f, 0.0f, Vector3(0.1F, 0.15F, 0.1F));
+    m_GameObjects.push_back(terrainDoor1);
+    m_TriggerObjects.push_back(terrainDoor1);
+    terrainDoor1->id = 2;
+
+    std::shared_ptr<Terrain> terrainDoor2 = std::make_shared<Terrain>("prison door", m_d3dDevice.Get(), m_fxFactory, Vector3(50.0f, 0.0f, 25.0f), 0.0f, 0.0f, 0.0f, Vector3(0.1F, 0.15F, 0.1F));
+    m_GameObjects.push_back(terrainDoor2);
+    m_TriggerObjects.push_back(terrainDoor2);
+    terrainDoor2->id = 3;
+
+    std::shared_ptr<Terrain> terrainTarget2 = std::make_shared<Terrain>("CUBECMOGO", m_d3dDevice.Get(), m_fxFactory, Vector3(-100.0f, 50.0f, 0.0f), 0.0f, 0.0f, 0.0f, Vector3(0.1F, 0.15F, 0.1F));
+    m_GameObjects.push_back(terrainTarget2);
+    m_TriggerObjects.push_back(terrainTarget2);
+    terrainTarget2->id = 3;
+
+
+
+    //Terrain* terrain3 = new Terrain("cube", m_d3dDevice.Get(), m_fxFactory, Vector3(-100.0f, 0.0f, -100.0f), 0.0f, 0.0f, 0.0f, Vector3::One);
 
     //L-system like tree
-    Tree* tree = new Tree(4, 4, .6f, 10.0f * Vector3::Up, XM_PI / 6.0f, "JEMINA vase -up", m_d3dDevice.Get(), m_fxFactory);
-    m_GameObjects.push_back(tree);  
+    std::shared_ptr<Tree> tree = std::make_shared<Tree>(4, 4, .6f, 10.0f * Vector3::Up, XM_PI / 6.0f, "JEMINA", m_d3dDevice.Get(), m_fxFactory);
+    m_GameObjects.push_back(tree);
     // todo: add to cmogo
 
     //Vertex Buffer Game Objects
-    FileVBGO* terrainBox = new FileVBGO("terrainTex", m_d3dDevice.Get());
+    std::shared_ptr<FileVBGO> terrainBox = std::make_shared<FileVBGO>("terrainTex", m_d3dDevice.Get());
     m_GameObjects.push_back(terrainBox);
 
-    FileVBGO* Box = new FileVBGO("cube", m_d3dDevice.Get());
+    /*FileVBGO* Box = new FileVBGO("cube", m_d3dDevice.Get());
     m_GameObjects.push_back(Box);
     Box->SetPos(Vector3(0.0f, 0.0f, -100.0f));
     Box->SetPitch(XM_PIDIV4);
-    Box->SetScale(20.0f);
+    Box->SetScale(20.0f);*/
 
-    VBCube* cube = new VBCube();
-    cube->init(11, m_d3dDevice.Get());
-    cube->SetPos(Vector3(100.0f, 0.0f, 0.0f));
-    cube->SetScale(4.0f);
-    m_GameObjects.push_back(cube);
+    //VBCube* cube = new VBCube();
+    //cube->init(11, m_d3dDevice.Get());
+    //cube->SetPos(Vector3(100.0f, 0.0f, 0.0f));
+    //cube->SetScale(4.0f);
+    //m_GameObjects.push_back(cube);
 
-    VBSpike* spikes = new VBSpike();
-    spikes->init(11, m_d3dDevice.Get());
-    spikes->SetPos(Vector3(0.0f, 0.0f, 100.0f));
-    spikes->SetScale(4.0f);
-    m_GameObjects.push_back(spikes);
+    //VBSpike* spikes = new VBSpike();
+    //spikes->init(11, m_d3dDevice.Get());
+    //spikes->SetPos(Vector3(0.0f, 0.0f, 100.0f));
+    //spikes->SetScale(4.0f);
+    //m_GameObjects.push_back(spikes);
 
-    VBSpiral* spiral = new VBSpiral();
-    spiral->init(11, m_d3dDevice.Get());
-    spiral->SetPos(Vector3(-100.0f, 0.0f, 0.0f));
-    spiral->SetScale(4.0f);
-    m_GameObjects.push_back(spiral);
+    //VBSpiral* spiral = new VBSpiral();
+    //spiral->init(11, m_d3dDevice.Get());
+    //spiral->SetPos(Vector3(-100.0f, 0.0f, 0.0f));
+    //spiral->SetScale(4.0f);
+    //m_GameObjects.push_back(spiral);
 
-    VBPillow* pillow = new VBPillow();
-    pillow->init(11, m_d3dDevice.Get());
-    pillow->SetPos(Vector3(-100.0f, 0.0f, -100.0f));
-    pillow->SetScale(4.0f);
-    m_GameObjects.push_back(pillow);
+    //VBPillow* pillow = new VBPillow();
+    //pillow->init(11, m_d3dDevice.Get());
+    //pillow->SetPos(Vector3(-100.0f, 0.0f, -100.0f));
+    //pillow->SetScale(4.0f);
+    //m_GameObjects.push_back(pillow);
 
-    VBSnail* snail = new VBSnail(m_d3dDevice.Get(), "shell", 150, 0.98f, 0.09f * XM_PI, 0.4f, Color(1.0f, 0.0f, 0.0f, 1.0f), Color(0.0f, 0.0f, 1.0f, 1.0f));
-    snail->SetPos(Vector3(-100.0f, 0.0f, 100.0f));
-    snail->SetScale(2.0f);
-    m_GameObjects.push_back(snail);
+    //VBSnail* snail = new VBSnail(m_d3dDevice.Get(), "shell", 150, 0.98f, 0.09f * XM_PI, 0.4f, Color(1.0f, 0.0f, 0.0f, 1.0f), Color(0.0f, 0.0f, 1.0f, 1.0f));
+    //snail->SetPos(Vector3(-100.0f, 0.0f, 100.0f));
+    //snail->SetScale(2.0f);
+    //m_GameObjects.push_back(snail);
 
-    //Marching Cubes
-    VBMarchCubes* VBMC = new VBMarchCubes();
-    VBMC->init(Vector3(-8.0f, -8.0f, -17.0f), Vector3(8.0f, 8.0f, 23.0f), 60.0f * Vector3::One, 0.01, m_d3dDevice.Get());
-    VBMC->SetPos(Vector3(100, 0, -100));
-    VBMC->SetPitch(-XM_PIDIV2);
-    VBMC->SetScale(Vector3(3, 3, 1.5));
-    m_GameObjects.push_back(VBMC);
+    ////Marching Cubes
+    //VBMarchCubes* VBMC = new VBMarchCubes();
+    //VBMC->init(Vector3(-8.0f, -8.0f, -17.0f), Vector3(8.0f, 8.0f, 23.0f), 60.0f * Vector3::One, 0.01, m_d3dDevice.Get());
+    //VBMC->SetPos(Vector3(100, 0, -100));
+    //VBMC->SetPitch(-XM_PIDIV2);
+    //VBMC->SetScale(Vector3(3, 3, 1.5));
+    //m_GameObjects.push_back(VBMC);
+    
+    //Add Menu Objects
 
- //add Player
-    pPlayer = new Player("UpdatedChief", m_d3dDevice.Get(), m_fxFactory);
+
+
+       //add Player
+    pPlayer = std::make_shared<Player>("UpdatedChief", m_d3dDevice.Get(), m_fxFactory);
     m_GameObjects.push_back(pPlayer);
-    pPlayer->SetPos(Vector3(-50, -50, -50));
-    pPlayer->SetScale(0.1f);
-
-    //create a base camera
-
-    m_FPScam = new FPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, pPlayer , Vector3::UnitY, Vector3(0.0f, 0.0f, 0.1f));
-    m_GameObjects.push_back(m_FPScam);
     m_PhysicsObjects.push_back(pPlayer);
+    pPlayer.get()->SetPos(Vector3(0, 0, 0));
+    pPlayer.get()->SetScale(0.1f);
+    
 
+    for (size_t i = 0; i < 5; i++)
+    {
+        std::shared_ptr<Projectile> pProjectile = std::make_shared<Projectile>("table", m_d3dDevice.Get(), m_fxFactory);
+        pProjectile->SetActive(false);
+        m_GameObjects.push_back(pProjectile);
+        m_PlayerProjectile.push_back(pProjectile);
+    }
+
+    pPlayer->projectiles = m_PlayerProjectile;
+
+    //create a FPS camera
+    m_FPScam = std::make_shared<FPSCamera>(0.25f * XM_PI, AR, 1.0f, 10000.0f, pPlayer , Vector3::UnitY, Vector3(0.0f, 0.0f, 0.1f));
+    m_GameObjects.push_back(m_FPScam);
+    
     //add a secondary camera
-    m_TPScam = new TPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, pPlayer, Vector3::UnitY, Vector3(0.0f, 0.0f, 50.0f));
+    m_TPScam = std::make_shared<TPSCamera>(0.25f * XM_PI, AR, 1.0f, 10000.0f, pPlayer, Vector3::UnitY, Vector3(0.0f, 0.0f, 50.0f));
     m_GameObjects.push_back(m_TPScam);
+    
 
     //test all GPGOs
     float* params = new float[3];
     params[0] = 10.f;  params[1] = 20.0f; params[2] = 30.f;
-    GPGO* pGPGO = new GPGO(m_d3dContext.Get(), GPGO_BOX, (float*)&Colors::Azure, params);
+    std::shared_ptr <GPGO> pGPGO = std::make_shared<GPGO>(m_d3dContext.Get(), GPGO_BOX, (float*)&Colors::Azure, params);
     pGPGO->SetPos(Vector3(-50.0f, 10.0f, -100.f));
-    m_GameObjects.push_back(pGPGO);
-    params[0] = params[1] = 20.0f; params[2] = (size_t)32;
-    pGPGO = new GPGO(m_d3dContext.Get(), GPGO_CONE, (float*)&Colors::Navy,params);
-    pGPGO->SetPos(Vector3(-50.0f, 10.0f, -70.f));
-    m_GameObjects.push_back(pGPGO);
-    params[0] = 15.0f;
-    pGPGO = new GPGO(m_d3dContext.Get(), GPGO_CUBE, (float*)&Colors::SeaGreen, params);
-    pGPGO->SetPos(Vector3(-50.0f, 10.0f, -40.f));
-    m_GameObjects.push_back(pGPGO);
-    params[0] = params[1] = 20.0f; params[2] = (size_t)32;
-    pGPGO = new GPGO(m_d3dContext.Get(), GPGO_CYLINDER, (float*)&Colors::OliveDrab, params);
-    pGPGO->SetPos(Vector3(-50.0f, 10.0f, -10.f));
-    m_GameObjects.push_back(pGPGO);
-    params[0] = 15.0f;
-    pGPGO = new GPGO(m_d3dContext.Get(), GPGO_DODECAHEDRON, (float*)&Colors::OrangeRed,params);
-    pGPGO->SetPos(Vector3(-50.0f, 10.0f, 20.f));
-    m_GameObjects.push_back(pGPGO);
-    params[0] =  15.0f; params[1] = (size_t)3;
-    pGPGO = new GPGO(m_d3dContext.Get(), GPGO_GEOSPHERE, (float*)&Colors::BlueViolet, params);
-    pGPGO->SetPos(Vector3(-50.0f, 10.0f, 50.f));
-    m_GameObjects.push_back(pGPGO);
-    params[0] = 20;
-    pGPGO = new GPGO(m_d3dContext.Get(), GPGO_ICOSAHEDRON, (float*)&Colors::DodgerBlue, params);
-    pGPGO->SetPos(Vector3(-50.0f, 10.0f, 80.f));
-    m_GameObjects.push_back(pGPGO);
-    params[0] = 20;
-    pGPGO = new GPGO(m_d3dContext.Get(), GPGO_OCTAHEDRON, (float*)&Colors::PaleTurquoise, params);
-    pGPGO->SetPos(Vector3(-50.0f, 10.0f, 110.f));
-    m_GameObjects.push_back(pGPGO);
-    params[0] = 15.0f; params[1] = (size_t)16;
-    pGPGO = new GPGO(m_d3dContext.Get(), GPGO_SPHERE, (float*)&Colors::LawnGreen, params);
-    pGPGO->SetPos(Vector3(-50.0f, 10.0f, 140.0));
-    m_GameObjects.push_back(pGPGO);
-    params[0] = 15.0f; params[1] = (size_t)8;
-    pGPGO = new GPGO(m_d3dContext.Get(), GPGO_TEAPOT, (float*)&Colors::YellowGreen, params);
-    pGPGO->SetPos(Vector3(-50.0f, 10.0f, 170.0f));
-    m_GameObjects.push_back(pGPGO);
-    params[0] = 20;
-    pGPGO = new GPGO(m_d3dContext.Get(), GPGO_TETRAHEDRON, (float*)&Colors::Firebrick, params);
-    pGPGO->SetPos(Vector3(-50.0f, 10.0f, 200.f));
-    m_GameObjects.push_back(pGPGO);
-    params[0] = 30.0f; params[1] = 10.0f; params[2] = (size_t)32;
-    pGPGO = new GPGO(m_d3dContext.Get(), GPGO_TORUS, (float*)&Colors::Aquamarine, params);
-    pGPGO->SetPos(Vector3(-50.0f, 10.0f, 230.f));
-    m_GameObjects.push_back(pGPGO);
+
 
     //create DrawData struct and populate its pointers
-    m_DD = new DrawData;
-    m_DD->m_pd3dImmediateContext = nullptr;
-    m_DD->m_states = m_states;
-    m_DD->m_cam = m_FPScam;
-    m_DD->m_light = m_light;
+    m_DrawData = new DrawData;
+    m_DrawData->m_pd3dImmediateContext = nullptr;
+    m_DrawData->m_states = m_states;
+    m_DrawData->m_cam = m_FPScam.get();
+    m_DrawData->m_light = m_light.get();
 
     //example basic 2D stuff
-    ImageGO2D* logo = new ImageGO2D("logo_small", m_d3dDevice.Get());
-    logo->SetPos(200.0f * Vector2::One);
-    m_GameObjects2D.push_back(logo);
-    ImageGO2D* bug_test = new ImageGO2D("bug_test", m_d3dDevice.Get());
-    bug_test->SetPos(300.0f * Vector2::One);
-    m_GameObjects2D.push_back(bug_test);
+    //ImageGO2D* logo = new ImageGO2D("logo_small", m_d3dDevice.Get());
+    //logo->SetPos(200.0f * Vector2::One);
+    //m_GameObjects2D.push_back(logo);
+    //ImageGO2D* bug_test = new ImageGO2D("bug_test", m_d3dDevice.Get());
+    //bug_test->SetPos(300.0f * Vector2::One);
+    //m_GameObjects2D.push_back(bug_test);
 
-    TextGO2D* text = new TextGO2D("Test Text");
-    text->SetPos(Vector2(100, 10));
-    text->SetColour(Color((float*)&Colors::Yellow));
-    m_GameObjects2D.push_back(text);
+    std::shared_ptr<TextGO2D> textMenu = std::make_shared<TextGO2D>("Welcome to the trigger game!! \n To win: \n 1: you must hit the correct block\n with the projectile (use the E key) \n 2: Walk through the correct door \n and you win! \n \n Press enter to start");
+    textMenu->SetPos(Vector2(100, 10));
+    textMenu->SetColour(Color((float*)&Colors::Yellow));
+    m_GameObjectsMenu.push_back(textMenu);
+
+    std::shared_ptr<TextGO2D> textwin = std::make_shared<TextGO2D>("WELLDONE!!! \n Press R to Play Again");
+    textwin->SetPos(Vector2(100, 10));
+    textwin->SetColour(Color((float*)&Colors::Yellow));
+    m_GameObjectsWin.push_back(textwin);
+
+    std::shared_ptr<TextGO2D> textlose = std::make_shared<TextGO2D>("UNLUCKY!!! \n Press R to Play Again");
+    textlose->SetPos(Vector2(100, 10));
+    textlose->SetColour(Color((float*)&Colors::Yellow));
+    m_GameObjectsLose.push_back(textlose);
 
     //Test Sounds
-    Loop* loop = new Loop(m_audioEngine.get(), "NightAmbienceSimple_02");
-    loop->SetVolume(0.1f);
-    loop->Play();
-    m_Sounds.push_back(loop);
+    //Loop* loop = new Loop(m_audioEngine.get(), "NightAmbienceSimple_02");
+    //loop->SetVolume(0.1f);
+    //loop->Play();
+    //m_Sounds.push_back(loop);
 
     TestSound* TS = new TestSound(m_audioEngine.get(), "Explo1");
     m_Sounds.push_back(TS);
@@ -261,64 +287,131 @@ void Game::Tick()
     {
         Update(m_timer);
     });
-
-    Render();
+    switch (currentState)
+    {
+    case Game::menu:
+        RenderMenu();
+        break;
+    case Game::game:
+        RenderGame();
+        break;
+    case Game::win:
+        RenderWin();
+        break;
+    case Game::lose:       
+        RenderLose();
+        break;
+    default:
+        break;
+    }
+ 
 }
 
 // Updates the world.
 void Game::Update(DX::StepTimer const& _timer)
 {
-   
     float elapsedTime = float(_timer.GetElapsedSeconds());
-    m_GD->m_dt = elapsedTime;
-
-    //this will update the audio engine but give us chance to do somehting else if that isn't working
-    if (!m_audioEngine->Update())
+    m_GameData->m_dt = elapsedTime;
+        
+    if (currentState == menu)
     {
-        if (m_audioEngine->IsCriticalError())
+        if (m_GameData->m_KBS_tracker.pressed.Enter)
         {
-            // We lost the audio device!
-        }
-    }
-    else
-    {
-        //update sounds playing
-        for (list<Sound*>::iterator it = m_Sounds.begin(); it != m_Sounds.end(); it++)
-        {
-            (*it)->Tick(m_GD);
+            currentState = game;
         }
     }
 
-    ReadInput();
-    //upon space bar switch camera state
-    //see docs here for what's going on: https://github.com/Microsoft/DirectXTK/wiki/Keyboard
-    if (m_GD->m_KBS_tracker.pressed.Space)
-    {
-        if (m_GD->m_GS == GS_PLAY_TPS_CAM)
+
+        //this will update the audio engine but give us chance to do somehting else if that isn't working
+        if (!m_audioEngine->Update())
         {
-            m_GD->m_GS = GS_PLAY_TPS_CAM;
+            if (m_audioEngine->IsCriticalError())
+            {
+                // We lost the audio device!
+            }
         }
         else
         {
-            m_GD->m_GS = GS_PLAY_FPS_CAM;
+            //update sounds playing
+            for (list<Sound*>::iterator it = m_Sounds.begin(); it != m_Sounds.end(); it++)
+            {
+                (*it)->Tick(m_GameData);
+            }
         }
-    }
 
-    //update all objects
-    for (list<GameObject*>::iterator it = m_GameObjects.begin(); it != m_GameObjects.end(); it++)
-    {
-        (*it)->Tick(m_GD);
-    }
-    for (list<GameObject2D*>::iterator it = m_GameObjects2D.begin(); it != m_GameObjects2D.end(); it++)
-    {
-        (*it)->Tick(m_GD);
-    }
+        ReadInput();
+        //upon space bar switch camera state
+        //see docs here for what's going on: https://github.com/Microsoft/DirectXTK/wiki/Keyboard
+        if (m_GameData->m_KBS_tracker.pressed.Space)
+        {
+            if (m_GameData->m_GS == GS_PLAY_TPS_CAM)
+            {
+                m_GameData->m_GS = GS_PLAY_TPS_CAM;
+            }
+            else
+            {
+                m_GameData->m_GS = GS_PLAY_FPS_CAM;
+            }
+        }
+        if (currentState == win or lose)
+        {            
+            if (m_GameData->m_KBS_tracker.pressed.R)
+            {
+                ResetGame();
+                currentState = menu;
+            }
+        }
 
-    CheckCollision();
+
+
+        //update all objects
+        for (std::vector<std::shared_ptr<GameObject>>::iterator it = m_GameObjects.begin(); it != m_GameObjects.end(); it++)
+        {
+            (*it)->Tick(m_GameData);
+        }
+        for (std::vector< std::shared_ptr<GameObject2D>>::iterator it = m_GameObjects2D.begin(); it != m_GameObjects2D.end(); it++)
+        {
+            (*it)->Tick(m_GameData);
+        }
+
+
+        onGroundCount = 0;
+        CheckCollision();
+        CheckTrigger();
+        if (onGroundCount > 0)
+        {
+            pPlayer.get()->m_acc.y -= gravity;
+        }
+        //std::cout << std::to_string(onGroundCount) << std::endl;
+
 }
+void Game::RenderMenu()
+{
+    // Don't try to render anything before the first Update.
+    if (m_timer.GetFrameCount() == 0)
+    {
+        return;
+    }
 
+    Clear();
+
+    //set immediate context of the graphics device
+    m_DrawData->m_pd3dImmediateContext = m_d3dContext.Get();
+
+    m_DrawData2DMenu->m_Sprites->Begin(SpriteSortMode_Deferred, m_states->NonPremultiplied());
+    for (std::vector<std::shared_ptr<GameObject2D>>::iterator it = m_GameObjectsMenu.begin(); it != m_GameObjectsMenu.end(); it++)
+    {
+        (*it)->Draw(m_DrawData2DMenu);
+    }
+    m_DrawData2DMenu->m_Sprites->End();
+
+    //drawing text screws up the Depth Stencil State, this puts it back again!
+    m_d3dContext->OMSetDepthStencilState(m_states->DepthDefault(), 0);
+
+    Present();
+}
 // Draws the scene.
-void Game::Render()
+void Game::RenderGame()
 {
     // Don't try to render anything before the first Update.
     if (m_timer.GetFrameCount() == 0)
@@ -329,31 +422,77 @@ void Game::Render()
     Clear();
     
     //set immediate context of the graphics device
-    m_DD->m_pd3dImmediateContext = m_d3dContext.Get();
+    m_DrawData->m_pd3dImmediateContext = m_d3dContext.Get();
 
-    //set which camera to be used
-    m_DD->m_cam = m_FPScam;
-    if (m_GD->m_GS == GS_PLAY_TPS_CAM)
+        //set which camera to be used
+        m_DrawData->m_cam = m_FPScam.get();
+        if (m_GameData->m_GS == GS_PLAY_TPS_CAM)
+        {
+            m_DrawData->m_cam = m_TPScam.get();
+        }
+
+        //update the constant buffer for the rendering of VBGOs
+        VBGO::UpdateConstantBuffer(m_DrawData);
+
+        //Draw 3D Game Obejects
+        for (std::vector < std::shared_ptr<GameObject>>::iterator it = m_GameObjects.begin(); it != m_GameObjects.end(); it++)
+        {
+            if ((*it)->IsActive())
+            {
+                (*it)->Draw(m_DrawData);
+            }
+        }
+
+
+    //drawing text screws up the Depth Stencil State, this puts it back again!
+    m_d3dContext->OMSetDepthStencilState(m_states->DepthDefault(), 0);
+
+    Present();
+}
+void Game::RenderWin()
+{
+    // Don't try to render anything before the first Update.
+    if (m_timer.GetFrameCount() == 0)
     {
-        m_DD->m_cam = m_TPScam;
+        return;
     }
 
-    //update the constant buffer for the rendering of VBGOs
-    VBGO::UpdateConstantBuffer(m_DD);
+    Clear();
 
-    //Draw 3D Game Obejects
-    for (list<GameObject*>::iterator it = m_GameObjects.begin(); it != m_GameObjects.end(); it++)
+    //set immediate context of the graphics device
+    m_DrawData->m_pd3dImmediateContext = m_d3dContext.Get();
+
+    m_DrawData2DWin->m_Sprites->Begin(SpriteSortMode_Deferred, m_states->NonPremultiplied());
+    for (std::vector<std::shared_ptr<GameObject2D>>::iterator it = m_GameObjectsWin.begin(); it != m_GameObjectsWin.end(); it++)
     {
-        (*it)->Draw(m_DD);
+        (*it)->Draw(m_DrawData2DWin);
+    }
+    m_DrawData2DWin->m_Sprites->End();
+
+    //drawing text screws up the Depth Stencil State, this puts it back again!
+    m_d3dContext->OMSetDepthStencilState(m_states->DepthDefault(), 0);
+
+    Present();
+}
+void Game::RenderLose()
+{
+    // Don't try to render anything before the first Update.
+    if (m_timer.GetFrameCount() == 0)
+    {
+        return;
     }
 
-    // Draw sprite batch stuff 
-    m_DD2D->m_Sprites->Begin(SpriteSortMode_Deferred, m_states->NonPremultiplied());
-    for (list<GameObject2D*>::iterator it = m_GameObjects2D.begin(); it != m_GameObjects2D.end(); it++)
+    Clear();
+
+    //set immediate context of the graphics device
+    m_DrawData->m_pd3dImmediateContext = m_d3dContext.Get();
+
+    m_DrawData2DLose->m_Sprites->Begin(SpriteSortMode_Deferred, m_states->NonPremultiplied());
+    for (std::vector<std::shared_ptr<GameObject2D>>::iterator it = m_GameObjectsLose.begin(); it != m_GameObjectsLose.end(); it++)
     {
-        (*it)->Draw(m_DD2D);
+        (*it)->Draw(m_DrawData2DLose);
     }
-    m_DD2D->m_Sprites->End();
+    m_DrawData2DLose->m_Sprites->End();
 
     //drawing text screws up the Depth Stencil State, this puts it back again!
     m_d3dContext->OMSetDepthStencilState(m_states->DepthDefault(), 0);
@@ -617,15 +756,15 @@ void Game::OnDeviceLost()
 
 void Game::ReadInput()
 {
-    m_GD->m_KBS = m_keyboard->GetState();
-    m_GD->m_KBS_tracker.Update(m_GD->m_KBS);
+    m_GameData->m_KBS = m_keyboard->GetState();
+    m_GameData->m_KBS_tracker.Update(m_GameData->m_KBS);
     //quit game on hiting escape
-    if (m_GD->m_KBS.Escape)
+    if (m_GameData->m_KBS.Escape)
     {
         ExitGame();
     }
 
-    m_GD->m_MS = m_mouse->GetState();
+    m_GameData->m_MS = m_mouse->GetState();
 
     //lock the cursor to the centre of the window
     RECT window;
@@ -633,8 +772,17 @@ void Game::ReadInput()
     SetCursorPos((window.left + window.right) >> 1, (window.bottom + window.top) >> 1);
 }
 
+void Game::ResetGame()
+{
+    targetHit = false;
+    TriggerState = triggerNone;
+    pPlayer->SetPos(Vector3(0, 0, 0));
+    pPlayer->SetAcceleration(Vector3(0 ,0 ,0 ));
+}
+
 void Game::CheckCollision()
 {
+    
     for (int i = 0; i < m_PhysicsObjects.size(); i++) for (int j = 0; j < m_ColliderObjects.size(); j++)
     {
         if (m_PhysicsObjects[i]->Intersects(*m_ColliderObjects[j])) //std::cout << "Collision Detected!" << std::endl;
@@ -642,6 +790,44 @@ void Game::CheckCollision()
             XMFLOAT3 eject_vect = Collision::ejectionCMOGO(*m_PhysicsObjects[i], *m_ColliderObjects[j]);
             auto pos = m_PhysicsObjects[i]->GetPos();
             m_PhysicsObjects[i]->SetPos(pos - eject_vect);
+            onGroundCount++;
+        }
+    }
+}
+void Game::CheckTrigger()
+{
+    for (int i = 0; i < m_PlayerProjectile.size(); i++) for (int j = 0; j < m_TriggerObjects.size(); j++)
+    {
+        if(m_PlayerProjectile[i]->Intersects(*m_TriggerObjects[j]))
+        { 
+            if (m_TriggerObjects[j]->id == 1)
+            {
+                std::cout << "Triggered target" << std::endl;
+                TriggerState = trigger1;
+                targetHit = true;
+            }
+            if (m_TriggerObjects[j]->id == 3)
+            {
+                std::cout << "Triggered target" << std::endl;
+                currentState = lose;
+            }
+        }
+        if (targetHit == true)
+        {
+            if (pPlayer->Intersects(*m_TriggerObjects[j]))  //std::cout << "Collision Detected!" << std::endl;
+            {
+                if (m_TriggerObjects[j]->id == 2)
+                {
+                    std::cout << "Triggered door" << std::endl;
+                    TriggerState = trigger2;
+                    currentState = win;
+                }
+                if (m_TriggerObjects[j]->id == 3)
+                {
+                    std::cout << "Triggered target" << std::endl;
+                    currentState = lose;
+                }
+            }
         }
     }
 }

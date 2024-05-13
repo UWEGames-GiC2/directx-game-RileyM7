@@ -15,5 +15,9 @@
     <Image Include="..\Models\Car\logo.png" />
     <Image Include="..\Models\Car\metal_lead_rough_basecolor.png" />
     <Image Include="..\Models\Car\metal_lead_rough_metallic.png" />
+    <Image Include="..\..\..\..\Downloads\door--prison-door-metal-old-12mb\textures\prison_door_Roughness.png" />
+    <Image Include="..\..\..\..\Downloads\door--prison-door-metal-old-12mb\textures\prison_door_BaseColor.png" />
+    <Image Include="..\..\..\..\Downloads\door--prison-door-metal-old-12mb\textures\prison_door_Metallic.png" />
+    <Image Include="..\..\..\..\Downloads\door--prison-door-metal-old-12mb\textures\prison_door_Normal.png" />
   </ItemGroup>
 </Project>

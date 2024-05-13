@@ -2,6 +2,8 @@
 #include "Player.h"
 #include <dinput.h>
 #include "GameData.h"
+#include "FPSCamera.h"
+#include <iostream>
 
 Player::Player(string _fileName, ID3D11Device* _pd3dDevice, IEffectFactory* _EF) : CMOGO(_fileName, _pd3dDevice, _EF)
 {
@@ -22,11 +24,17 @@ Player::~Player()
 
 void Player::Tick(GameData* _GD)
 {
+
 	switch (_GD->m_GS)
 	{
 	case GS_PLAY_FPS_CAM:
 	{
-	
+		pHeight = 15;
+		if (m_pos.y - pHeight <= 0)
+		{	
+			m_pos.y = pHeight;
+		}
+		
 		//TURN AND FORWARD CONTROL HERE
 		Vector3 forwardMove = 40.0f * Vector3::Forward;
 		Matrix rotMove = Matrix::CreateRotationY(m_yaw);
@@ -49,22 +57,22 @@ void Player::Tick(GameData* _GD)
 		//	break;
 		//}
 	}
-	case GS_PLAY_TPS_CAM:
-	{
-		//TURN AND FORWARD CONTROL HERE
-		Vector3 forwardMove = 40.0f * Vector3::Forward;
-		Matrix rotMove = Matrix::CreateRotationY(m_yaw);
-		forwardMove = Vector3::Transform(forwardMove, rotMove);
-		if (_GD->m_KBS.W)
-		{
-			m_acc += forwardMove;
-		}
-		if (_GD->m_KBS.S)
-		{
-			m_acc -= forwardMove;
-		}
-		break;
-	}
+	//case GS_PLAY_TPS_CAM:
+	//{
+	//	//TURN AND FORWARD CONTROL HERE
+	//	Vector3 forwardMove = 40.0f * Vector3::Forward;
+	//	Matrix rotMove = Matrix::CreateRotationY(m_yaw);
+	//	forwardMove = Vector3::Transform(forwardMove, rotMove);
+	//	if (_GD->m_KBS.W)
+	//	{
+	//		m_acc += forwardMove;
+	//	}
+	//	if (_GD->m_KBS.S)
+	//	{
+	//		m_acc -= forwardMove;
+	//	}
+	//	break;
+	//}
 	}
 
 	//change orinetation of player
@@ -72,10 +80,14 @@ void Player::Tick(GameData* _GD)
 	Vector3 sideMove = 40.0f * Vector3::Right;
 	Matrix rotMove = Matrix::CreateRotationY(m_yaw);
 	sideMove = Vector3::Transform(sideMove, rotMove);
-	m_yaw -= _GD->m_dt * _GD->m_MS.x;
-	m_pitch -= _GD->m_dt * _GD->m_MS.y;
+	float _pitch = m_pitch;
 	if (m_pitch > XMConvertToRadians(60)) m_pitch = XMConvertToRadians(60);
 	if (m_pitch < XMConvertToRadians(-60)) m_pitch = XMConvertToRadians(-60);
+	if ((int(XMConvertToDegrees(m_yaw)) / 180) % 2 == 0) { _pitch = -m_pitch; }
+
+	m_yaw -= _GD->m_dt * _GD->m_MS.x;
+	m_pitch -= _GD->m_dt * _GD->m_MS.y;
+
 	if (_GD->m_KBS.A)
 	{
 		m_acc -= sideMove;
@@ -86,15 +98,16 @@ void Player::Tick(GameData* _GD)
 	}
 
 	//move player up and down
-	if (_GD->m_KBS.R)
-	{
-		m_acc.y += 40.0f;
-	}
+	//if (_GD->m_KBS.R)
+	//{
+	//	m_acc.y += 40.0f;
+	//}
 
-	if (_GD->m_KBS.F)
-	{
-		m_acc.y -= 40.0f;
-	}
+	//if (_GD->m_KBS.F)
+	//{
+	//	m_acc.y -= 40.0f;
+	//}
+
 
 	//limit motion of the player
 	float length = m_pos.Length();
@@ -104,6 +117,35 @@ void Player::Tick(GameData* _GD)
 		m_pos.Normalize();
 		m_pos *= maxLength;
 		m_vel *= -0.9; //VERY simple bounce back
+	}
+
+
+
+	if (_GD->m_KBS_tracker.pressed.E)
+	{
+		for (size_t i = 0; i < projectiles.size(); i++)
+		{
+
+			if (!projectiles[i]->IsActive())
+			{
+
+				printf("Found Usable projectile\n");
+				Vector3 forwardMove = 40.0f * Vector3::Forward;
+				Matrix rotMove = Matrix::CreateRotationY(m_yaw) * Matrix::CreateRotationZ(_pitch);
+				//std::cout << std::to_string(m_yaw);
+				forwardMove = Vector3::Transform(forwardMove, rotMove);
+
+				projectiles[i]->SetPos(Vector3(this->GetPos().x, this->GetPos().y - 5, this->GetPos().z));
+				projectiles[i]->SetActive(true);
+				projectiles[i]->SetYaw(this->GetYaw());
+				projectiles[i]->SetDrag(0.01f);
+				projectiles[i]->SetPhysicsOn(true);
+				projectiles[i]->SetAcceleration(forwardMove * 100.0f);
+
+				break;
+			}
+			
+		}
 	}
 
 	//apply my base behaviour
